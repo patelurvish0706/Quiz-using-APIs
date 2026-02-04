@@ -267,12 +267,12 @@
             } else if (originalMarksThatUserGet > QueAns.length / 0.50 && originalMarksThatUserGet < QueAns.length / 0.75) {
                 document.getElementById('status').innerText = "Good 👍🏻"
                 document.getElementById('scoreText').innerText = "Scored up to 50% ";
-                document.getElementById('question').innerHTML = `<h1 style="color:yellow;">${originalMarksThatUserGet}/${QueAns.length}</h1><p>${originalMarksThatUserGet} question answered correctly.</p><p><b style="color:yellow;">Passed</b></p>`;
+                document.getElementById('question').innerHTML = `<h1 style="color:orange;">${originalMarksThatUserGet}/${QueAns.length}</h1><p>${originalMarksThatUserGet} question answered correctly.</p><p><b style="color:orange;">Passed</b></p>`;
             } else if (originalMarksThatUserGet < QueAns.length / 0.50) {
                 document.getElementById('status').innerText = "Try Again 🔴"
                 document.getElementById('scoreText').innerText = "Scored lower than 50% ";
-                document.getElementById('question').innerHTML = `<h1 style="color:yellow;">${originalMarksThatUserGet}/${QueAns.length}</h1><p>${originalMarksThatUserGet} question answered correctly.</p><p><b style="color:yellow;">Passed</b></p>`;
-            }
+                document.getElementById('question').innerHTML = `<h1 style="color:red;">${originalMarksThatUserGet}/${QueAns.length}</h1><p>${originalMarksThatUserGet} question answered correctly.</p><p><b style="color:red;">Failed</b></p>`;
+            }}
 
             document.getElementById('nextBtn').style.display = "none"
             document.getElementById('options').classList = 'row hidden'
@@ -341,3 +341,4 @@
 
 
 </html>
+
