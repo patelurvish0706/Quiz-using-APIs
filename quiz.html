@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sports MCQ Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 700px;
+            margin: auto;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            display: flex;
+            padding: 10px 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background: #fff;
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .option {
+            width: 100%;
+            text-align: left;
+            border: 1px solid #ddd;
+            padding: 7px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .correct {
+            border-color: #2e7d32;
+            background: #e8f5e9;
+        }
+
+        .wrong {
+            border-color: #c62828;
+            background: #ffebee;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .muted {
+            color: #666;
+            font-size: 14px;
+        }
+
+        #loadingFadeQue {
+            color: #f1f1f1;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+
+            margin: 2px;
+        }
+    </style>
+
+    <!-- Loader -->
+
+    <style>
+        .loader {
+            width: 15px;
+            height: 15px;
+            border: 3px solid #FFF;
+            border-bottom-color: #000000d3;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1.1s linear infinite;
+
+            margin-left: 10px;
+            padding-bottom: 0;
+        }
+
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Sports MCQ Quiz</h2>
+
+    <div class="card">
+        <div class="topbar">
+            <div id="status" class="muted">Click Start</div>
+            <div id="scoreText" class="muted">Score: 0</div>
+        </div>
+
+        <h3 id="question">Ready to Start ?</h3>
+
+        <div id="options" class="row hidden">
+            <button class="option" id="opt0">
+                <p id="loadingFadeQue" style="width:25%;">-</p>
+            </button>
+            <button class="option" id="opt1">
+                <p id="loadingFadeQue" style="width:25%;">-</p>
+            </button>
+            <button class="option" id="opt2">
+                <p id="loadingFadeQue" style="width:25%;">-</p>
+            </button>
+            <button class="option" id="opt3">
+                <p id="loadingFadeQue" style="width:25%;">-</p>
+            </button>
+        </div>
+
+        <div class="row">
+            <button id="startBtn">Start Quiz</button>
+            <button id="nextBtn" class="hidden">Next</button>
+            <!-- Load And Next using counter -->
+            <button id="restartBtn" class="hidden">Restart</button>
+            <!-- Reset same que with suffled Options -->
+        </div>
+    </div>
+
+    <!-- <script src="quiz.js"></script> -->
+    <!-- <script src="quiz2.js"></script> -->
+    <script>
+        // --- Getting Data Once From Server. ---
+
+        let originalMarksThatUserGet = 0;
+
+        let api, data, QueAns = [];
+
+        let getData = async () => {
+            api = await fetch('https://opentdb.com/api.php?amount=10&category=21&difficulty=easy&type=multiple')
+            data = await api.json()
+
+            if (data.response_code != 0) {
+                ReGetData();
+            }
+
+            console.log(data.results.length)
+
+            for (let i = 0; i < data.results.length; i++) {
+
+                let question = data.results[i].question
+                let correct_answer = data.results[i].correct_answer
+                let Alloptions = data.results[i].incorrect_answers
+                Alloptions.push(correct_answer)
+                // Alloptions.sort()
+
+                // QueAns[i] = [question, correct_answer, Alloptions]
+                QueAns[i] = [question, Alloptions]
+                // enableVarify(Alloptions.length, correct_answer)
+                // console.log(...QueAns[i])
+
+            }
+            return data, document.getElementById('startBtn').style.display = 'none', nextLoad();
+        }
+
+        let ReGetData = () => {
+            getData()
+            console.log('Refetched')
+        }
+
+
+        // --- Clicking Start Quizzz ---
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            data = getData()
+
+            document.getElementById('question').innerHTML = `<p id="loadingFadeQue" style="width:100%;">-</p><p id="loadingFadeQue" style="width:18%;">-</p>`
+            document.getElementById('startBtn').innerHTML = `Wait a Moment <span class="loader"></span>`;
+            document.getElementById('options').classList = 'row'
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('status').innerText = 'Loading...'
+            document.getElementById('status').style.transitionDuration = '1s'
+
+        });
+
+        function decodeHTML(text) {
+            let txt = document.createElement("textarea");
+            txt.innerHTML = text;
+            return txt.value;
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', () => { nextLoad() })
+
+        // --- Loading QueAns In Each Card ---
+
+
+        let queCounter = 0;
+
+        let nextLoad = () => {
+            document.getElementById('nextBtn').style.display = "inline-block"
+            document.getElementById('restartBtn').style.display = "inline-block"
+            if (queCounter >= data.results.length) {
+                showFinal();
+                return;
+            }
+
+            let QueToLoad = QueAns[queCounter][0]
+            let AnsToLoad = QueAns[queCounter][1]
+            let correct_answer = AnsToLoad[(AnsToLoad.length) - 1]// for testing right ans
+
+
+            resetVerify(AnsToLoad.length);
+            enableVarify(AnsToLoad.length, (AnsToLoad[(AnsToLoad.length) - 1]))
+
+            AnsToLoad.sort()
+
+            // QueAns[queCounter][0] // to varify right or not
+
+            // console.log(...QueAns[queCounter])
+            document.getElementById('question').innerText = decodeHTML(QueToLoad);
+
+            for (let i = 0; i < AnsToLoad.length; i++) {
+                let opt = "opt" + i;
+                // console.log(AnsToLoad[i],opt)
+                document.getElementById(`${opt}`).innerText = decodeHTML(AnsToLoad[i]);
+            }
+            document.getElementById('status').innerText = "Question " + (queCounter + 1)
+            document.getElementById('scoreText').innerText = "Score: " + originalMarksThatUserGet;
+
+            document.getElementById('nextBtn').disabled = true;
+
+            // console.log(QueToLoad , " " , AnsToLoad)
+            // console.log(queCounter)
+            queCounter++
+
+            console.log(correct_answer);
+
+        }
+
+        function showFinal() {
+
+            if (originalMarksThatUserGet > QueAns.length / 0.75 && originalMarksThatUserGet <= QueAns.length) {
+                document.getElementById('status').innerText = "Excellent 🎉"
+                document.getElementById('scoreText').innerText = "Scored up to 75% ";
+                document.getElementById('question').innerHTML = `<h1 style="color:green;">${originalMarksThatUserGet}/${QueAns.length}</h1><p>${originalMarksThatUserGet} question answered correctly.</p><p><b style="color:green;">Passed</b></p>`;
+            } else if (originalMarksThatUserGet > QueAns.length / 0.50 && originalMarksThatUserGet < QueAns.length / 0.75) {
+                document.getElementById('status').innerText = "Good 👍🏻"
+                document.getElementById('scoreText').innerText = "Scored up to 50% ";
+                document.getElementById('question').innerHTML = `<h1 style="color:yellow;">${originalMarksThatUserGet}/${QueAns.length}</h1><p>${originalMarksThatUserGet} question answered correctly.</p><p><b style="color:yellow;">Passed</b></p>`;
+            } else if (originalMarksThatUserGet < QueAns.length / 0.50) {
+                document.getElementById('status').innerText = "Try Again 🔴"
+                document.getElementById('scoreText').innerText = "Scored lower than 50% ";
+                document.getElementById('question').innerHTML = `<h1 style="color:yellow;">${originalMarksThatUserGet}/${QueAns.length}</h1><p>${originalMarksThatUserGet} question answered correctly.</p><p><b style="color:yellow;">Passed</b></p>`;
+            }
+
+            document.getElementById('nextBtn').style.display = "none"
+            document.getElementById('options').classList = 'row hidden'
+
+        };
+
+        function resetVerify(num) {
+            for (let j = 0; j < num; j++) {
+                let opt = "opt" + j;
+                let rightOption = document.getElementById(`${opt}`)
+                rightOption.style.color = "black"
+                rightOption.style.backgroundColor = "#fff"
+                rightOption.disabled = false;
+            }
+        }
+
+        function enableVarify(num, correct_answer) {
+
+            for (let i = 0; i < num; i++) {
+                let opt = "opt" + i;
+                let option = document.getElementById(`${opt}`)
+                option.addEventListener('click', () => {
+                    // console.log(option.id);
+
+                    document.getElementById('nextBtn').disabled = false;
+                    if (option.innerText === correct_answer) {
+                        option.style.color = "green"
+                        option.style.backgroundColor = "#0f01"
+
+                        originalMarksThatUserGet++;
+                    } else {
+                        option.style.color = "red"
+                        option.style.backgroundColor = "#f001"
+
+                        for (let j = 0; j < num; j++) {
+                            let opt = "opt" + j;
+                            let rightOption = document.getElementById(`${opt}`)
+                            if (rightOption.innerText == decodeHTML(correct_answer)) {
+                                rightOption.style.color = "green"
+                                rightOption.style.backgroundColor = "#0f01"
+                            }
+                        }
+                    }
+                    for (let j = 0; j < num; j++) {
+                        let opt = "opt" + j;
+                        let rightOption = document.getElementById(`${opt}`)
+                        rightOption.disabled = true;
+                    }
+                })
+            }
+            // document.getElementById('nextBtn').disabled = true;
+
+
+        }
+        document.getElementById('restartBtn').addEventListener('click', (e) => {
+            let reset = confirm("Want to restart Quiz?");
+            if (reset) {
+                location.reload()
+            } else {
+                e.preventDefault();
+            }
+        })
+
+    </script>
+</body>
+
+</html>
